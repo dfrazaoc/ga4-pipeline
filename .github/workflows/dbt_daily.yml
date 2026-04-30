@@ -40,18 +40,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Write GCP key file
+        run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp_key.json
+
       - name: dbt deps
         working-directory: ${{ env.DBT_DIR }}
         env:
           GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
-          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+          GCP_KEYFILE_PATH: /tmp/gcp_key.json
         run: dbt deps
 
       - name: dbt run
         working-directory: ${{ env.DBT_DIR }}
         env:
           GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
-          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+          GCP_KEYFILE_PATH: /tmp/gcp_key.json
         run: |
           if [ "${{ github.event.inputs.full_refresh }}" = "true" ]; then
             dbt run --full-refresh --profiles-dir .
@@ -63,7 +66,7 @@ jobs:
         working-directory: ${{ env.DBT_DIR }}
         env:
           GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
-          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+          GCP_KEYFILE_PATH: /tmp/gcp_key.json
         run: dbt test --profiles-dir .
 
       - name: Provision Metabase Dashboard

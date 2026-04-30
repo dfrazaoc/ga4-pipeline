@@ -12,7 +12,5 @@ models:
   ga4_analytics:
     staging:
       +materialized: view
-      +schema: ga4_analytics
     marts:
       +materialized: incremental
-      +schema: ga4_analytics

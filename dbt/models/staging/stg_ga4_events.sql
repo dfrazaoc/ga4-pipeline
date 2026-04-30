@@ -37,7 +37,7 @@ SELECT
     -- Dimensions
     device.category                                                                            AS device_category,
     device.operating_system,
-    device.browser,
+    device.web_info.browser                                                                    AS browser,
     geo.country,
     geo.city,
     traffic_source.source                                                                      AS traffic_source,
