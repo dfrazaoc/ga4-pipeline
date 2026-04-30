@@ -1,11 +1,6 @@
 output "metabase_url" {
   description = "Metabase Cloud Run URL"
-  value       = google_cloud_run_v2_service.metabase.uri
-}
-
-output "cloud_sql_connection_name" {
-  description = "Cloud SQL connection name for the proxy"
-  value       = google_sql_database_instance.metabase.connection_name
+  value       = "https://metabase-357155427260.us-central1.run.app"
 }
 
 output "bq_dataset" {
