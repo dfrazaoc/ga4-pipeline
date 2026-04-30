@@ -53,6 +53,7 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         run: |
           terraform import google_bigquery_dataset.ga4_analytics "$PROJECT_ID/ga4_analytics"    || true
+          terraform import google_service_account.metabase_runner "projects/$PROJECT_ID/serviceAccounts/metabase-cloudrun@${PROJECT_ID}.iam.gserviceaccount.com" || true
           terraform import google_secret_manager_secret.postgres_password "projects/$PROJECT_ID/secrets/postgres-password"    || true
           terraform import google_secret_manager_secret.metabase_admin_password "projects/$PROJECT_ID/secrets/metabase-admin-password"    || true
           terraform import google_sql_database_instance.metabase "$PROJECT_ID/metabase-db"      || true
