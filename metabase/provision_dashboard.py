@@ -60,10 +60,10 @@ def setup_if_needed() -> None:
     """Run /api/setup only if Metabase has not been set up yet."""
     r = requests.get(f"{METABASE_URL}/api/session/properties", timeout=30)
     props = r.json()
-    if props.get("setup-token") is None:
+    setup_token = props.get("setup-token")
+    if not setup_token:
         print("Metabase already configured — skipping setup.", flush=True)
         return
-    setup_token = props["setup-token"]
     payload = {
         "token": setup_token,
         "user": {
@@ -80,6 +80,9 @@ def setup_if_needed() -> None:
         },
     }
     r = requests.post(f"{METABASE_URL}/api/setup", json=payload, timeout=60)
+    if r.status_code == 403:
+        print("Setup token already consumed — Metabase is configured.", flush=True)
+        return
     r.raise_for_status()
     print("Metabase setup complete.", flush=True)
 
