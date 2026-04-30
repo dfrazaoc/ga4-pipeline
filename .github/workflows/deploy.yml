@@ -49,6 +49,20 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         run: terraform init -input=false
 
+      - name: Clean stale Terraform state entries
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          terraform state rm google_sql_database_instance.metabase          || true
+          terraform state rm google_sql_database.metabase                   || true
+          terraform state rm google_sql_user.postgres                       || true
+          terraform state rm google_secret_manager_secret.postgres_password || true
+          terraform state rm google_secret_manager_secret.metabase_admin_password || true
+          terraform state rm google_secret_manager_secret_version.postgres_password || true
+          terraform state rm google_secret_manager_secret_version.metabase_admin_password || true
+          terraform state rm random_password.postgres                       || true
+          terraform state rm google_cloud_run_v2_service.metabase           || true
+          terraform state rm google_cloud_run_v2_service_iam_member.metabase_public || true
+
       - name: Import existing resources (safe — || true on each)
         working-directory: ${{ env.TF_DIR }}
         run: |
