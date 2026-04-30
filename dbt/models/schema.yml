@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: stg_ga4_events
+    description: "Staging view of raw GA4 events from the public ecommerce sample dataset"
+    columns:
+      - name: event_date
+        tests:
+          - not_null
+      - name: event_name
+        tests:
+          - not_null
+
+  - name: fct_sessions
+    description: "One row per session with bounce and purchase flags"
+    columns:
+      - name: event_date
+        tests:
+          - not_null
+      - name: ga_session_id
+        tests:
+          - not_null
+
+  - name: fct_transactions
+    description: "One row per purchase transaction"
+    columns:
+      - name: transaction_id
+        tests:
+          - not_null
+      - name: revenue_usd
+        tests:
+          - not_null
+
+  - name: fct_items
+    description: "One row per item within each purchase transaction"
+    columns:
+      - name: item_name
+        tests:
+          - not_null
+
+  - name: fct_funnel
+    description: "Funnel step flags per session"
+    columns:
+      - name: event_date
+        tests:
+          - not_null
+
+  - name: fct_daily_metrics
+    description: "Daily summary: sessions, revenue, conversions, bounce rate"
+    columns:
+      - name: event_date
+        tests:
+          - not_null
+          - unique

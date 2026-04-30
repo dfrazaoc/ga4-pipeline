@@ -1,0 +1,78 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_ID: askcosta
+  REGION: us-central1
+  STATE_BUCKET: askcosta-tf-state
+  TF_DIR: terraform
+
+jobs:
+  deploy:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Clear stale Terraform lock
+        run: |
+          LOCK="gs://$STATE_BUCKET/terraform/state/default.tflock"
+          if gcloud storage ls "$LOCK" --project="$PROJECT_ID" &>/dev/null; then
+            gcloud storage rm "$LOCK" --project="$PROJECT_ID"
+          fi
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init -input=false
+
+      - name: Import existing resources (safe — || true on each)
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          terraform import google_bigquery_dataset.ga4_analytics "$PROJECT_ID/ga4_analytics"    || true
+          terraform import google_secret_manager_secret.postgres_password "projects/$PROJECT_ID/secrets/postgres-password"    || true
+          terraform import google_secret_manager_secret.metabase_admin_password "projects/$PROJECT_ID/secrets/metabase-admin-password"    || true
+          terraform import google_sql_database_instance.metabase "$PROJECT_ID/metabase-db"      || true
+          terraform import google_sql_database.metabase "$PROJECT_ID/metabase-db/metabase"      || true
+          terraform import google_sql_user.postgres "$PROJECT_ID/metabase-db/postgres"          || true
+          terraform import google_cloud_run_v2_service.metabase "projects/$PROJECT_ID/locations/$REGION/services/metabase" || true
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -input=false tfplan
+
+      - name: Output Metabase URL
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          URL=$(terraform output -raw metabase_url)
+          echo "### Metabase URL" >> $GITHUB_STEP_SUMMARY
+          echo "$URL" >> $GITHUB_STEP_SUMMARY
+          echo "**Next step:** set \`METABASE_URL\` GitHub secret to: \`$URL\`" >> $GITHUB_STEP_SUMMARY
+          echo "METABASE_URL=$URL" >> $GITHUB_ENV

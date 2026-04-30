@@ -1,0 +1,77 @@
+name: dbt Daily Run + Dashboard
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: "Run dbt with --full-refresh"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_ID: askcosta
+  REGION: us-central1
+  BQ_DATASET: ga4_analytics
+  DBT_DIR: dbt
+
+jobs:
+  dbt:
+    name: dbt Run
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: dbt deps
+        working-directory: ${{ env.DBT_DIR }}
+        env:
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+        run: dbt deps
+
+      - name: dbt run
+        working-directory: ${{ env.DBT_DIR }}
+        env:
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.full_refresh }}" = "true" ]; then
+            dbt run --full-refresh --profiles-dir .
+          else
+            dbt run --profiles-dir .
+          fi
+
+      - name: dbt test
+        working-directory: ${{ env.DBT_DIR }}
+        env:
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+        run: dbt test --profiles-dir .
+
+      - name: Provision Metabase Dashboard
+        env:
+          METABASE_URL: ${{ secrets.METABASE_URL }}
+          METABASE_ADMIN_EMAIL: danielamaria338@gmail.com
+          METABASE_ADMIN_PASSWORD: AskCostaData2026!
+          GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
+          GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+          BQ_DATASET: ${{ env.BQ_DATASET }}
+        run: python metabase/provision_dashboard.py
