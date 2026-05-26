@@ -65,7 +65,13 @@ Terraform state is stored in GCS (`askcosta-tf-state`).
 ### Prerequisites
 
 - GCP project with billing enabled
-- `gcloud` CLI authenticated
+- `gcloud` CLI authenticated:
+```         
+curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-x86_64.tar.gz 
+tar -xf google-cloud-cli-darwin-x86_64.tar.gz
+./google-cloud-sdk/install.sh
+gcloud auth login
+```
 - GitHub repository secrets:
   - `GCP_SA_KEY` — service account key JSON with BigQuery, Cloud Run, and Secret Manager permissions
   - `METABASE_URL` — Cloud Run URL output from the first Terraform apply
