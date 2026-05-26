@@ -72,8 +72,8 @@ jobs:
       - name: Provision Metabase Dashboard
         env:
           METABASE_URL: ${{ secrets.METABASE_URL }}
-          METABASE_ADMIN_EMAIL: ${{ secrets.email }}
-          METABASE_ADMIN_PASSWORD: ${{ secrets.password }}
+          METABASE_ADMIN_EMAIL: ${{ secrets.METABASE_ADMIN_EMAIL }}
+          METABASE_ADMIN_PASSWORD: ${{ secrets.METABASE_ADMIN_PASSWORD }}
           GCP_PROJECT_ID: ${{ env.PROJECT_ID }}
           GCP_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
           BQ_DATASET: ${{ env.BQ_DATASET }}
